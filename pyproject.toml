@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "-bart"
+version = "0.1.0"
+description = "Summarizing chat using BART model."
+authors = ["SwiftyJunnos <junnos.dev@gmail.com>"]
+readme = "README.md"
+packages = [{include = "bart"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+torch = "2.3.0"
+tqdm = "^4.66.4"
+transformers = "^4.40.2"
+pydantic = "^2.7.1"
+pyarrow = "^16.0.0"
+pandas = "^2.2.2"
+evaluate = "^0.4.2"
+datasets = "^2.19.1"
+orjson = "^3.10.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
