@@ -66,7 +66,7 @@ class Chat(BaseModel):
     def dialogues(self) -> str:
         return " ".join(
             map(
-                lambda u: f"{u.participant_id}:: {u.utterance}",
+                lambda u: f"{u.participant_id}::{u.utterance}",
                 self.body.dialogues
             )
         )
