@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from torch.nn import Module
 
 from .const import TRAIN_SET, VALID_SET
-from .data.dataset import QuestionDataset
+from .data.dataset import ChatDataset
 from .model.models import Models, Tokenizer
 from .trainer import DLTrainer
 
@@ -31,8 +31,8 @@ if __name__ == "__main__":
     tokenizer, model = Models.from_pretrained(model_name)
     
     # Dataset
-    train_dataset = QuestionDataset(file_path=TRAIN_SET, tokenizer=tokenizer)
-    valid_dataset = QuestionDataset(file_path=VALID_SET, tokenizer=tokenizer)
+    train_dataset = ChatDataset(file_path=TRAIN_SET, tokenizer=tokenizer)
+    valid_dataset = ChatDataset(file_path=VALID_SET, tokenizer=tokenizer)
     
     # print(next(iter(train_dataset)))
     

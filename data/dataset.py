@@ -11,7 +11,7 @@ from .chat_data import ChatData
 
 _BASE_PATH: str = "./data/Korean Chat/"
 
-class QuestionDataset(Dataset):
+class ChatDataset(Dataset):
     """
     Questions Parquet 파일로부터 Dataset을 생성합니다.
     `def __init__(self, filename: str)`
