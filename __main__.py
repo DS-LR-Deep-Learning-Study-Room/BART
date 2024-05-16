@@ -18,12 +18,18 @@ parser.add_argument(
     type=int, default=5,
     help="Number of epochs to train."
 )
+parser.add_argument(
+    "-W", "--overwrite", dest="overwrite",
+    action="store_true",
+    help="If --overwrite arg is True, new dataset will be created from json files."
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     
     model_name: str = args.model
     epochs: int = args.epoch
+    overwrite: bool = args.overwrite
     
     # Tokenizer & Model
     tokenizer: Tokenizer
@@ -31,8 +37,12 @@ if __name__ == "__main__":
     tokenizer, model = Models.from_pretrained(model_name)
     
     # Dataset
-    train_dataset = ChatDataset(file_path=TRAIN_SET, tokenizer=tokenizer)
-    valid_dataset = ChatDataset(file_path=VALID_SET, tokenizer=tokenizer)
+    train_dataset = ChatDataset(
+        file_path=TRAIN_SET, tokenizer=tokenizer, overwrite=overwrite
+    )
+    valid_dataset = ChatDataset(
+        file_path=VALID_SET, tokenizer=tokenizer, overwrite=overwrite
+    )
     
     # print(next(iter(train_dataset)))
     
