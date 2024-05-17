@@ -1,10 +1,12 @@
 from argparse import ArgumentParser
 
 from torch.nn import Module
+from transformers import DataCollatorForSeq2Seq
 
 from .const import TRAIN_SET, VALID_SET
 from .data.dataset import ChatDataset
-from .model.models import Models, Tokenizer
+from .data.tokenizer import ChatTokenizer
+from .model.models import Models
 from .trainer import DLTrainer
 
 parser = ArgumentParser(description="Helper for training & inferencing DL models.")
@@ -32,7 +34,7 @@ if __name__ == "__main__":
     overwrite: bool = args.overwrite
     
     # Tokenizer & Model
-    tokenizer: Tokenizer
+    tokenizer: ChatTokenizer
     model: Module
     tokenizer, model = Models.from_pretrained(model_name)
     
@@ -44,13 +46,16 @@ if __name__ == "__main__":
         file_path=VALID_SET, tokenizer=tokenizer, overwrite=overwrite
     )
     
-    # print(next(iter(train_dataset)))
+    # Data Collator
+    collator = DataCollatorForSeq2Seq(tokenizer.origin_tokenizer, model=model)
     
     trainer = DLTrainer(
         model=model,
         train_data=train_dataset,
         eval_data=valid_dataset,
-        epochs=epochs
+        epochs=epochs,
+        data_collator=collator,
+        tokenizer=tokenizer.origin_tokenizer
     )
     trainer.train()
     

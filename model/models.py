@@ -1,14 +1,10 @@
 from enum import StrEnum, unique
-from typing import TypeAlias
 
 from torch.nn import Module
-from transformers import (
-    AutoModelForSequenceClassification,
-    PreTrainedTokenizer,
-    PreTrainedTokenizerFast,
-)
+from transformers import AutoModelForSeq2SeqLM
 
-Tokenizer: TypeAlias = PreTrainedTokenizer | PreTrainedTokenizerFast
+from ..data.tokenizer import ChatTokenizer
+
 
 @unique
 class Models(StrEnum):
@@ -17,13 +13,13 @@ class Models(StrEnum):
     KOBART_BASE = "gogamza/kobart-base-v2"
     
     @property
-    def tokenizer(self) -> Tokenizer:
-        tokenizer = PreTrainedTokenizerFast.from_pretrained(self.value)
+    def tokenizer(self) -> ChatTokenizer:
+        tokenizer = ChatTokenizer(self.value)
         return tokenizer
     
     @property
     def model(self) -> Module:
-        model: Module = AutoModelForSequenceClassification.from_pretrained(self.value)
+        model: Module = AutoModelForSeq2SeqLM.from_pretrained(self.value)
         return model
     
     @classmethod
@@ -31,7 +27,7 @@ class Models(StrEnum):
         return list(map(lambda c: c.name, cls))
 
     @classmethod
-    def from_pretrained(cls, name: str) -> tuple[Tokenizer, Module]:
+    def from_pretrained(cls, name: str) -> tuple[ChatTokenizer, Module]:
         try:
             model_enum = cls[name]
         except KeyError as keyerr:

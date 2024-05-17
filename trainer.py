@@ -3,48 +3,86 @@ import os
 from typing import Optional
 
 import evaluate
+import numpy as np
 import torch.nn as nn
 from torch.utils.data import Dataset
-from transformers.trainer import Trainer, TrainingArguments
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from .const import CHECKPOINT_DIR, MODEL_DIR
+from .data.tokenizer import Tokenizer
 
 
 class DLTrainer:
     def __init__(
         self,
         model: nn.Module,
+        data_collator,
+        tokenizer: Tokenizer,
         train_data: Optional[Dataset] = None,
         eval_data: Optional[Dataset] = None,
         epochs: float = 3,
-        batch_size: int = 8,
-        label_names: Optional[list[str]] = None
+        batch_size: int = 4
     ):
-        training_args = TrainingArguments(
+        training_args = Seq2SeqTrainingArguments(
             output_dir=CHECKPOINT_DIR,
             overwrite_output_dir=True,
             evaluation_strategy="epoch",
             save_strategy="epoch",
-            save_total_limit=3,
+            save_total_limit=2,
             num_train_epochs=epochs,
             per_device_train_batch_size=batch_size,
-            label_names=label_names,
+            per_device_eval_batch_size=batch_size,
+            weight_decay=0.01,
+            fp16=True,
+            predict_with_generate=True,
             load_best_model_at_end=True
         )
-        self.trainer = Trainer(
+        self.trainer = Seq2SeqTrainer(
             model=model,
             args=training_args,
             train_dataset=train_data,
             eval_dataset=eval_data,
-            compute_metrics=self.compute_metrics
+            data_collator=data_collator,
+            tokenizer=tokenizer,
+            compute_metrics=self.compute_rouge
         )
         
-        self.metric = evaluate.load("accuracy")
+        self.tokenizer = tokenizer
+        self.rouge = evaluate.load("rouge")
     
-    def compute_metrics(self, eval_pred) -> Optional[dict]:
-        logits, labels = eval_pred
-        predictions = logits.argmax(-1)
-        return self.metric.compute(predictions=predictions, references=labels)
+    def compute_rouge(self, eval_pred):
+        predictions, labels = eval_pred
+        decoded_preds = self.tokenizer.batch_decode(
+            predictions,
+            skip_special_tokens=True
+        )
+        decoded_labels = self.tokenizer.batch_decode(
+            labels,
+            skip_special_tokens=True
+        )
+        
+        result = self.rouge.compute(
+            predictions=decoded_preds,
+            references=decoded_labels,
+            use_stemmer=True
+        )
+        
+        res = self.rouge.compute(
+            predictions=decoded_preds,
+            references=decoded_labels
+        )
+        res = {
+            key: value.mid.fmeasure * 100
+            for key, value in res.items()
+        }
+        
+        prediction_lens = [
+            np.count_nonzero(pred != self.tokenizer.pad_token_id)
+            for pred in predictions
+        ]
+        result["gen_len"] = np.mean(prediction_lens)
+        
+        return {k: round(v, 4) for k, v in result.items()}
     
     def train(self):
         self.trainer.train()

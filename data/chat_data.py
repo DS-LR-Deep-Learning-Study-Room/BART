@@ -81,10 +81,10 @@ class ChatData(BaseModel):
         return list(mapped_dialogues)
     
     def summary(self, index: int) -> str:
-        return self.data[index].body.summary
+        return self.chats[index].body.summary
 
     def uterrances(self, index: int) -> list[str]:
-        return list(map(lambda d: d.utterance, self.data[index].body.dialogues))
+        return list(map(lambda d: d.utterance, self.chats[index].body.dialogues))
     
     def merge_(self, chat_data: "ChatData"):
         print(
@@ -94,5 +94,4 @@ class ChatData(BaseModel):
         self.chats.extend(chat_data.chats)
 
     def __getitem__(self, index: int) -> str:
-        print(f"Getting item: {index} from {len(self.dialogues)}")
         return self.dialogues[index]

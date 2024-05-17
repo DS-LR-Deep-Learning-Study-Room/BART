@@ -22,6 +22,10 @@ class ChatTokenizer:
         self.max_length = max_length
         self.max_target = max_target
     
+    @property
+    def origin_tokenizer(self):
+        return self.tokenizer
+    
     def tokenize(
         self,
         text_input: str,
@@ -35,25 +39,29 @@ class ChatTokenizer:
         ```json
         {
             "input_ids": torch.Tensor, // 토큰화 된 입력
+            "token_type_ids": Optional[torch.Tensor]
             "attention_masks": torch.Tensor,
             "labels": torch.Tensor // 토큰화 된 Summary
         }
         ```
         """
         model_input = self.tokenizer(
-            text_input,
+            text=text_input,
             max_length=self.max_length,
             padding="max_length",
-            truncation=True
+            truncation=True,
+            return_tensors="pt"
         )
+        model_input["input_ids"].squeeze_(0)
+        model_input["attention_mask"].squeeze_(0)
         
-        with self.tokenizer.as_target_tokenizer():
-            targets = self.tokenizer(
-                summary_target,
-                max_length=self.max_target,
-                padding="max_length",
-                truncation=True
-            )
-        model_input["labels"] = targets["input_ids"]
+        targets = self.tokenizer(
+            text_target=summary_target,
+            max_length=self.max_target,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt"
+        )
+        model_input["labels"] = targets["input_ids"].squeeze(0)
         
         return ModelInput.model_validate(model_input)

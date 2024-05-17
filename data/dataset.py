@@ -1,18 +1,17 @@
 import asyncio
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import orjson
-import torch
 from pydantic import TypeAdapter, ValidationError
 from torch.utils.data import Dataset
 
-from ..model.models import Tokenizer
 from .chat_data import ChatData
+from .tokenizer import ChatTokenizer
 
 _BASE_PATH: str = "./data/Korean Chat/"
-_TORCH_DATASET_FILENAME: str = "dataset.pt"
+_TORCH_DATASET_FILENAME: str = "dataset.json"
 
 class ChatDataset(Dataset):
     """
@@ -23,26 +22,32 @@ class ChatDataset(Dataset):
     def __init__(
         self,
         file_path: str,
-        tokenizer: Tokenizer,
+        tokenizer: ChatTokenizer,
         max_length: int = 512,
         overwrite: bool = False
     ):
         """
         `filename` : Parquet 파일 이름
-        `tokenizer` : Tokenizer 인스턴스
+        `tokenizer` : ChatTokenizer 인스턴스
         `max_length` : Token 최대 길이
         """
         super().__init__()
+        
+        self.chat_adapter = TypeAdapter(ChatData)
         
         dataset_dir: str = os.path.join(_BASE_PATH, file_path)
         dataset_file_path: str = os.path.join(dataset_dir, _TORCH_DATASET_FILENAME)
         
         if overwrite is False and os.path.exists(dataset_file_path):
             print("Pre-saved dataset file detected. Loading it...")
-            chat_data = torch.load(dataset_file_path)
-            print(f"Dataset loaded from pre-saved file: {chat_data.num_chats} chats")
-            
-            self.chat_data = chat_data
+            with open(dataset_file_path) as json_file:
+                _chat_data = json_file.read()
+                chat_data = self.chat_adapter.validate_json(_chat_data)
+                print(
+                    f"Dataset loaded from pre-saved file: {chat_data.num_chats} chats"
+                )
+                
+                self.chat_data = chat_data
         else:
             print(
                 """
@@ -63,8 +68,12 @@ Saving new one...
             chat_data = asyncio.run(
                 self.load_json_data(data_files=data_files)
             )
-            torch.save(chat_data, dataset_file_path)
-            print(f"Dataset loaded and saved: {chat_data.num_chats} chats")
+            _json = chat_data.model_dump_json(indent=2, by_alias=True)
+            
+            with open(dataset_file_path, "w") as json_file:
+                json_file.write(_json)
+            
+                print(f"Dataset loaded and saved: {chat_data.num_chats} chats")
 
             self.chat_data = chat_data
         
@@ -72,13 +81,11 @@ Saving new one...
         self.max_length = max_length
     
     async def load_json_data(self, data_files: np.ndarray[str]) -> ChatData:
-        chat_adapter = TypeAdapter(ChatData)
-        
         _chat_data = ChatData()
         
         async with asyncio.TaskGroup() as tg:
             tasks = [
-                tg.create_task(self._load_json_data(file, adapter=chat_adapter))
+                tg.create_task(self._load_json_data(file, adapter=self.chat_adapter))
                 for file in data_files
             ]
             
@@ -106,23 +113,13 @@ Saving new one...
             print(f"File not found: {e}")
         return None
 
-    def num_labels(self) -> int:
-        nunique = self.dataframe["label"].nunique()
-        if isinstance(nunique, int):
-            return nunique
-        else:
-            return 0
-
     def __len__(self):
         return self.chat_data.num_chats
-
-    def __getitem__(self, index: int) -> list[int]:
+    
+    def __getitem__(self, index: int) -> dict[str, Any]:
         chat = self.chat_data[index]
+        summary = self.chat_data.summary(index)
         
-        encoded_chat = self.tokenizer.encode(
-            chat,
-            padding="max_length", truncation=True, max_length=self.max_length,
-            return_tensors="pt"
-        )
-        print(chat)
-        return encoded_chat
+        model_input = self.tokenizer.tokenize(text_input=chat, summary_target=summary)
+        
+        return model_input.model_dump(exclude={"token_type_ids"})
