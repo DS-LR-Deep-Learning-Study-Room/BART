@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from cProfile import Profile
 from pstats import Stats
+from typing import Optional
 
 import torch
 from torch.nn import Module
@@ -30,7 +31,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-D", "--device", dest="selected_device",
-    type=int,
+    type=int, required=False,
     help="Choose specific device to run Torch."
 )
 
@@ -40,9 +41,10 @@ def main():
     model_name: str = args.model
     epochs: int = args.epoch
     overwrite: bool = args.overwrite
-    selected_device: int = args.selected_device
+    selected_device: Optional[int] = args.selected_device
     
-    torch.cuda.set_device(selected_device)
+    if selected_device is not None:
+        torch.cuda.set_device(selected_device)
     
     # Tokenizer & Model
     tokenizer: ChatTokenizer

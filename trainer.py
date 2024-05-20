@@ -4,6 +4,7 @@ from typing import Optional
 
 import evaluate
 import numpy as np
+import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
@@ -21,8 +22,11 @@ class DLTrainer:
         train_data: Optional[Dataset] = None,
         eval_data: Optional[Dataset] = None,
         epochs: float = 3,
-        batch_size: int = 4
+        batch_size: int = 4,
+        device: Optional[torch.device] = None
     ):
+        _use_fp16 = (device is not None and device == torch.device("cuda"))
+
         training_args = Seq2SeqTrainingArguments(
             output_dir=CHECKPOINT_DIR,
             overwrite_output_dir=True,
@@ -33,7 +37,7 @@ class DLTrainer:
             per_device_train_batch_size=batch_size,
             per_device_eval_batch_size=batch_size,
             weight_decay=0.01,
-            fp16=True,
+            fp16=_use_fp16,
             predict_with_generate=True,
             load_best_model_at_end=True
         )
@@ -46,10 +50,10 @@ class DLTrainer:
             tokenizer=tokenizer,
             compute_metrics=self.compute_rouge
         )
-        
+
         self.tokenizer = tokenizer
         self.rouge = evaluate.load("rouge")
-    
+
     def compute_rouge(self, eval_pred):
         predictions, labels = eval_pred
         decoded_preds = self.tokenizer.batch_decode(
@@ -60,13 +64,13 @@ class DLTrainer:
             labels,
             skip_special_tokens=True
         )
-        
+
         result = self.rouge.compute(
             predictions=decoded_preds,
             references=decoded_labels,
             use_stemmer=True
         )
-        
+
         res = self.rouge.compute(
             predictions=decoded_preds,
             references=decoded_labels
@@ -75,18 +79,18 @@ class DLTrainer:
             key: value.mid.fmeasure * 100
             for key, value in res.items()
         }
-        
+
         prediction_lens = [
             np.count_nonzero(pred != self.tokenizer.pad_token_id)
             for pred in predictions
         ]
         result["gen_len"] = np.mean(prediction_lens)
-        
+
         return {k: round(v, 4) for k, v in result.items()}
-    
+
     def train(self):
         self.trainer.train()
-        
+
         with contextlib.suppress(OSError):
             os.remove(MODEL_DIR)
         self.trainer.save_model(MODEL_DIR)

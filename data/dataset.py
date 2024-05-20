@@ -8,10 +8,10 @@ from pydantic import TypeAdapter, ValidationError
 from torch.utils.data import Dataset
 
 from .chat_data import ChatData
+from .const import JSON_DATASET_FILENAME
 from .tokenizer import ChatTokenizer
 
 _BASE_PATH: str = "./data/Korean Chat/"
-_TORCH_DATASET_FILENAME: str = "dataset.json"
 
 class ChatDataset(Dataset):
     """
@@ -36,7 +36,7 @@ class ChatDataset(Dataset):
         self.chat_adapter = TypeAdapter(ChatData)
         
         dataset_dir: str = os.path.join(_BASE_PATH, file_path)
-        dataset_file_path: str = os.path.join(dataset_dir, _TORCH_DATASET_FILENAME)
+        dataset_file_path: str = os.path.join(dataset_dir, JSON_DATASET_FILENAME)
         
         if overwrite is False and os.path.exists(dataset_file_path):
             print("Pre-saved dataset file detected. Loading it...")
