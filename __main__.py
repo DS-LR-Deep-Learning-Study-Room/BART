@@ -1,5 +1,8 @@
 from argparse import ArgumentParser
+from cProfile import Profile
+from pstats import Stats
 
+import torch
 from torch.nn import Module
 from transformers import DataCollatorForSeq2Seq
 
@@ -25,13 +28,21 @@ parser.add_argument(
     action="store_true",
     help="If --overwrite arg is True, new dataset will be created from json files."
 )
+parser.add_argument(
+    "-D", "--device", dest="selected_device",
+    type=int,
+    help="Choose specific device to run Torch."
+)
 
-if __name__ == "__main__":
+def main():
     args = parser.parse_args()
     
     model_name: str = args.model
     epochs: int = args.epoch
     overwrite: bool = args.overwrite
+    selected_device: int = args.selected_device
+    
+    torch.cuda.set_device(selected_device)
     
     # Tokenizer & Model
     tokenizer: ChatTokenizer
@@ -58,4 +69,12 @@ if __name__ == "__main__":
         tokenizer=tokenizer.origin_tokenizer
     )
     trainer.train()
-    
+
+if __name__ == "__main__":
+    profiler = Profile()
+    profiler.run('main()')
+
+    stats = Stats(profiler)
+    stats.strip_dirs()
+    stats.sort_stats('cumulative')
+    stats.print_stats()
