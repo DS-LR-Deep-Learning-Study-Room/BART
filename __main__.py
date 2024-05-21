@@ -42,22 +42,22 @@ parser.add_argument(
 
 def main():
     args = parser.parse_args()
-    
+
     model_name: str = args.model
     eval_only: bool = args.eval_only
     epochs: int = args.epoch
     overwrite: bool = args.overwrite
     selected_device: Optional[int] = args.selected_device
-    
+
     if selected_device is not None:
         # os.environ["CUDA_VISIBLE_DEVICES"] = f"{selected_device}"
         torch.cuda.set_device(selected_device)
-    
+
     # Tokenizer & Model
     tokenizer: ChatTokenizer
     model: Module
     tokenizer, model = Models.from_pretrained(model_name)
-    
+
     # Dataset
     train_dataset = ChatDataset(
         file_path=TRAIN_SET, tokenizer=tokenizer, overwrite=overwrite
@@ -65,10 +65,10 @@ def main():
     valid_dataset = ChatDataset(
         file_path=VALID_SET, tokenizer=tokenizer, overwrite=overwrite
     )
-    
+
     # Data Collator
     collator = DataCollatorForSeq2Seq(tokenizer.origin_tokenizer, model=model)
-    
+
     trainer = DLTrainer(
         model=model,
         train_data=train_dataset,
@@ -77,12 +77,18 @@ def main():
         data_collator=collator,
         tokenizer=tokenizer.origin_tokenizer
     )
-    
+
     if not eval_only:
         print("Start training... You can skip this process by using \"--eval\".")
         trainer.train()
-    
+
     print("Start evaluating...")
+    trainer = DLTrainer(
+        model=Models.from_finetuned(),
+        eval_data=valid_dataset,
+        data_collator=collator,
+        tokenizer=tokenizer.origin_tokenizer
+    )
     eval_result = trainer.evaluate(valid_dataset)
     print(eval_result)
 
