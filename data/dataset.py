@@ -11,7 +11,7 @@ from pandas import DataFrame
 from pydantic import TypeAdapter, ValidationError
 from torch.utils.data import Dataset
 
-from .chat_data import ChatData, Chat
+from .chat_data import Chat, ChatData
 from .const import JSON_DATASET_FILENAME, PARQUET_DATASET_FILENAME
 from .tokenizer import ChatTokenizer
 
@@ -45,7 +45,8 @@ class ChatDataset(Dataset):
         dataset_dir: str = os.path.join(_BASE_PATH, file_path)
         dataset_file_path: str = os.path.join(dataset_dir, PARQUET_DATASET_FILENAME)
         
-        if overwrite is False and os.path.exists(dataset_file_path): # Parquet 파일이 있을 경우
+        # Parquet 파일이 있을 경우 or overwrite arg가 True일 경우
+        if overwrite is False and os.path.exists(dataset_file_path):
             print("Pre-saved dataset parquet file detected. Loading it...")
             _df = pd.read_parquet(dataset_file_path)
             print(
@@ -88,7 +89,7 @@ Saving new one...
                     print("Saved dataset as json format.")
             
             # JSON으로부터 dataframe을 만들고 parquet 파일 저장
-            with open(json_file_path, "r") as json_file:
+            with open(json_file_path) as json_file:
                 json_data = orjson.loads(json_file.read())
                 _df = pd.DataFrame(json_data)
             
@@ -142,6 +143,9 @@ Saving new one...
         
         chat_data = _chat_adapter.validate_python(data)
         
-        model_input = self.tokenizer.tokenize(text_input=chat_data.dialogues, summary_target=chat_data.body.summary)
+        model_input = self.tokenizer.tokenize(
+            text_input=chat_data.dialogues,
+            summary_target=chat_data.body.summary
+        )
         
         return model_input.model_dump(exclude={"token_type_ids"})

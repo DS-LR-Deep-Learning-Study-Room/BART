@@ -20,6 +20,11 @@ parser.add_argument(
     required=True, help="Select model to use."
 )
 parser.add_argument(
+    "-V", "--eval", dest="eval_only",
+    action="store_true",
+    help="Skips training and run only evaluation."
+)
+parser.add_argument(
     "-E", "--epoch", dest="epoch",
     type=int, default=5,
     help="Number of epochs to train."
@@ -39,11 +44,13 @@ def main():
     args = parser.parse_args()
     
     model_name: str = args.model
+    eval_only: bool = args.eval_only
     epochs: int = args.epoch
     overwrite: bool = args.overwrite
     selected_device: Optional[int] = args.selected_device
     
     if selected_device is not None:
+        # os.environ["CUDA_VISIBLE_DEVICES"] = f"{selected_device}"
         torch.cuda.set_device(selected_device)
     
     # Tokenizer & Model
@@ -70,7 +77,14 @@ def main():
         data_collator=collator,
         tokenizer=tokenizer.origin_tokenizer
     )
-    trainer.train()
+    
+    if not eval_only:
+        print("Start training... You can skip this process by using \"--eval\".")
+        trainer.train()
+    
+    print("Start evaluating...")
+    eval_result = trainer.evaluate(valid_dataset)
+    print(eval_result)
 
 if __name__ == "__main__":
     profiler = Profile()

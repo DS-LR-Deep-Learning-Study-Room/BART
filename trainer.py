@@ -76,7 +76,7 @@ class DLTrainer:
             references=decoded_labels
         )
         res = {
-            key: value.mid.fmeasure * 100
+            key: value * 100
             for key, value in res.items()
         }
 
