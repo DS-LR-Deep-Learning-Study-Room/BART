@@ -8,19 +8,15 @@ import torch
 from torch.nn import Module
 from transformers import DataCollatorForSeq2Seq
 
-from .const import TRAIN_SET, TEST_SET
+from .const import TEST_SET, TRAIN_SET
 from .data.dataset import ChatDataset
 from .data.tokenizer import ChatTokenizer
 from .model.models import Models
 from .trainer import DLTrainer
 
-
 parser = ArgumentParser(description="Helper for training & inferencing DL models.")
 parser.add_argument(
-    "--debug",
-    dest="debug",
-    action="store_true",
-    help="Print function profiler."
+    "--debug", dest="debug", action="store_true", help="Print function profiler."
 )
 parser.add_argument(
     "-M",
@@ -59,7 +55,7 @@ parser.add_argument(
     dest="fraction",
     type=float,
     default="1.0",
-    help="Fraction to divide dataset to train and valid."
+    help="Fraction to divide dataset to train and valid.",
 )
 parser.add_argument(
     "-D",
@@ -89,7 +85,7 @@ def main():
     tokenizer: ChatTokenizer
     model: Module
     tokenizer, model = Models.from_pretrained(model_name)
-    
+
     # Data Collator
     collator = DataCollatorForSeq2Seq(tokenizer.origin_tokenizer, model=model)
 
@@ -103,15 +99,15 @@ def main():
             file_path=TRAIN_SET,
             tokenizer=tokenizer,
             overwrite=overwrite,
-            fraction=fraction
+            fraction=fraction,
         )
         valid_dataset = ChatDataset(
             file_path=TRAIN_SET,
             tokenizer=tokenizer,
             overwrite=overwrite,
-            index=train_dataset.selected_index
+            index=train_dataset.selected_index,
         )
-        
+
         trainer = DLTrainer(
             model=model,
             train_data=train_dataset,
@@ -138,9 +134,9 @@ def main():
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    
+
     debug: bool = args.debug
-    
+
     if debug:
         profiler = Profile()
         profiler.run("main()")

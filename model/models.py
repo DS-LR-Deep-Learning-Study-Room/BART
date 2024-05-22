@@ -49,7 +49,6 @@ class Models(StrEnum):
         checkpoints = os.listdir(CHECKPOINT_DIR)
 
         model: Module = AutoModelForSeq2SeqLM.from_pretrained(
-            CHECKPOINT_DIR + checkpoints[-1],
-            local_files_only=True
+            CHECKPOINT_DIR + checkpoints[-1], local_files_only=True
         )
         return model
