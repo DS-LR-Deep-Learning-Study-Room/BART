@@ -7,4 +7,4 @@ MODEL_DIR: str = PROJECT_NAME + "/res/model/"
 
 ### Dataset
 TRAIN_SET = "Training/"
-VALID_SET = "Validation/"
+TEST_SET = "Validation/"

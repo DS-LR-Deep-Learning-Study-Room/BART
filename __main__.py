@@ -3,15 +3,17 @@ from cProfile import Profile
 from pstats import Stats
 from typing import Optional
 
+import pandas as pd
 import torch
 from torch.nn import Module
 from transformers import DataCollatorForSeq2Seq
 
-from .const import TRAIN_SET, VALID_SET
+from .const import TRAIN_SET, TEST_SET
 from .data.dataset import ChatDataset
 from .data.tokenizer import ChatTokenizer
 from .model.models import Models
 from .trainer import DLTrainer
+
 
 parser = ArgumentParser(description="Helper for training & inferencing DL models.")
 parser.add_argument(
@@ -41,7 +43,7 @@ parser.add_argument(
     "--epoch",
     dest="epoch",
     type=int,
-    default=5,
+    default=3,
     help="Number of epochs to train.",
 )
 parser.add_argument(
@@ -50,6 +52,14 @@ parser.add_argument(
     dest="overwrite",
     action="store_true",
     help="If --overwrite arg is True, new dataset will be created from json files.",
+)
+parser.add_argument(
+    "-F",
+    "--dataset-fraction",
+    dest="fraction",
+    type=float,
+    default="1.0",
+    help="Fraction to divide dataset to train and valid."
 )
 parser.add_argument(
     "-D",
@@ -68,6 +78,7 @@ def main():
     eval_only: bool = args.eval_only
     epochs: int = args.epoch
     overwrite: bool = args.overwrite
+    fraction: float = args.fraction
     selected_device: Optional[int] = args.selected_device
 
     if selected_device is not None:
@@ -78,23 +89,29 @@ def main():
     tokenizer: ChatTokenizer
     model: Module
     tokenizer, model = Models.from_pretrained(model_name)
-
-    # Dataset
-
-    train_dataset: Optional[ChatDataset] = None
-    if not eval_only:
-        train_dataset = ChatDataset(
-            file_path=TRAIN_SET, tokenizer=tokenizer, overwrite=overwrite
-        )
-    valid_dataset = ChatDataset(
-        file_path=VALID_SET, tokenizer=tokenizer, overwrite=overwrite
-    )
-
+    
     # Data Collator
     collator = DataCollatorForSeq2Seq(tokenizer.origin_tokenizer, model=model)
 
+    # Dataset
+    _index: Optional[pd.Index] = None
+    train_dataset: Optional[ChatDataset] = None
+    valid_dataset: Optional[ChatDataset] = None
     if not eval_only:
         print('Start training... You can skip this process by using "--eval".')
+        train_dataset = ChatDataset(
+            file_path=TRAIN_SET,
+            tokenizer=tokenizer,
+            overwrite=overwrite,
+            fraction=fraction
+        )
+        valid_dataset = ChatDataset(
+            file_path=TRAIN_SET,
+            tokenizer=tokenizer,
+            overwrite=overwrite,
+            index=train_dataset.selected_index
+        )
+        
         trainer = DLTrainer(
             model=model,
             train_data=train_dataset,
@@ -106,9 +123,12 @@ def main():
         trainer.train()
 
     print("Start evaluating...")
+    test_dataset = ChatDataset(
+        file_path=TEST_SET, tokenizer=tokenizer, overwrite=overwrite
+    )
     trainer = DLTrainer(
         model=Models.from_finetuned(),
-        eval_data=valid_dataset,
+        eval_data=test_dataset,
         data_collator=collator,
         tokenizer=tokenizer.origin_tokenizer,
     )

@@ -32,11 +32,19 @@ class ChatDataset(Dataset):
 		tokenizer: ChatTokenizer,
 		max_length: int = 512,
 		overwrite: bool = False,
+		fraction: Optional[float] = 1.0,
+		index: Optional[pd.Index] = None,
 	):
 		"""
 		`filename` : Parquet 파일 이름
 		`tokenizer` : ChatTokenizer 인스턴스
 		`max_length` : Token 최대 길이
+		`overwrite` : dataset의 존재 여부와 상관없이 덮어씁니다.
+		`fraction` : dataset에서 사용할 데이터의 비율 (0.0 ~ 1.0)
+		`index` : dataset에서 사용할 데이터의 index
+  
+		`fraction`과 `index` 중 하나의 값은 주어져야 합니다. 주어지지 않을 경우,
+		1.0 `fraction`을 사용해 학습됩니다.
 		"""
 		super().__init__()
 
@@ -51,8 +59,6 @@ class ChatDataset(Dataset):
 			print("Pre-saved dataset parquet file detected. Loading it...")
 			_df = pd.read_parquet(dataset_file_path)
 			print(f"Dataset loaded from pre-saved file: {len(_df)} chats")
-
-			self.dataframe = _df
 		else:  # Parquet 파일이 없을 경우
 			print(
 				"""
@@ -91,10 +97,19 @@ Saving new one...
 
 			table = pa.Table.from_pandas(_df)
 			pq.write_table(table, dataset_file_path)
-			self.dataframe = _df
+
+		if index is None: # Using index
+			self.dataframe = _df.drop(index=index)
+			self.selected_index = self.dataframe.index
+		else: # Using fraction (default : 1.0)
+			self.dataframe = _df.sample(frac=fraction)
 
 		self.tokenizer = tokenizer
 		self.max_length = max_length
+
+	@property
+	def selected_index(self) -> pd.Index:
+		return self.selected_index
 
 	async def load_json_data(self, data_files: np.ndarray[str]) -> ChatData:
 		_chat_data = ChatData()
