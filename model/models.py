@@ -4,10 +4,8 @@ from enum import StrEnum, unique
 from torch.nn import Module
 from transformers import AutoModelForSeq2SeqLM
 
-from ..const import PROJECT_NAME
+from ..const import CHECKPOINT_DIR
 from ..data.tokenizer import ChatTokenizer
-
-_CHECKPOINT_DIR = PROJECT_NAME + "/checkpoints"
 
 
 @unique
@@ -48,7 +46,10 @@ class Models(StrEnum):
 
     @classmethod
     def from_finetuned(cls) -> Module:
-        checkpoints = os.listdir(_CHECKPOINT_DIR)
+        checkpoints = os.listdir(CHECKPOINT_DIR)
 
-        model: Module = AutoModelForSeq2SeqLM.from_pretrained(checkpoints[-1])
+        model: Module = AutoModelForSeq2SeqLM.from_pretrained(
+            CHECKPOINT_DIR + checkpoints[-1],
+            local_files_only=True
+        )
         return model
