@@ -15,6 +15,12 @@ from .trainer import DLTrainer
 
 parser = ArgumentParser(description="Helper for training & inferencing DL models.")
 parser.add_argument(
+    "--debug",
+    dest="debug",
+    action="store_true",
+    help="Print function profiler."
+)
+parser.add_argument(
     "-M",
     "--model",
     dest="model",
@@ -111,10 +117,17 @@ def main():
 
 
 if __name__ == "__main__":
-    profiler = Profile()
-    profiler.run("main()")
+    args = parser.parse_args()
+    
+    debug: bool = args.debug
+    
+    if debug:
+        profiler = Profile()
+        profiler.run("main()")
 
-    stats = Stats(profiler)
-    stats.strip_dirs()
-    stats.sort_stats("cumulative")
-    stats.print_stats()
+        stats = Stats(profiler)
+        stats.strip_dirs()
+        stats.sort_stats("cumulative")
+        stats.print_stats()
+    else:
+        main()
