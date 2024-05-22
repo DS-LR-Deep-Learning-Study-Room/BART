@@ -15,88 +15,104 @@ from .trainer import DLTrainer
 
 parser = ArgumentParser(description="Helper for training & inferencing DL models.")
 parser.add_argument(
-    "-M", "--model", dest="model",
-    type=str, choices=Models.allCases(),
-    required=True, help="Select model to use."
+	"-M",
+	"--model",
+	dest="model",
+	type=str,
+	choices=Models.allCases(),
+	required=True,
+	help="Select model to use.",
 )
 parser.add_argument(
-    "-V", "--eval", dest="eval_only",
-    action="store_true",
-    help="Skips training and run only evaluation."
+	"-V",
+	"--eval",
+	dest="eval_only",
+	action="store_true",
+	help="Skips training and run only evaluation.",
 )
 parser.add_argument(
-    "-E", "--epoch", dest="epoch",
-    type=int, default=5,
-    help="Number of epochs to train."
+	"-E",
+	"--epoch",
+	dest="epoch",
+	type=int,
+	default=5,
+	help="Number of epochs to train.",
 )
 parser.add_argument(
-    "-W", "--overwrite", dest="overwrite",
-    action="store_true",
-    help="If --overwrite arg is True, new dataset will be created from json files."
+	"-W",
+	"--overwrite",
+	dest="overwrite",
+	action="store_true",
+	help="If --overwrite arg is True, new dataset will be created from json files.",
 )
 parser.add_argument(
-    "-D", "--device", dest="selected_device",
-    type=int, required=False,
-    help="Choose specific device to run Torch."
+	"-D",
+	"--device",
+	dest="selected_device",
+	type=int,
+	required=False,
+	help="Choose specific device to run Torch.",
 )
+
 
 def main():
-    args = parser.parse_args()
+	args = parser.parse_args()
 
-    model_name: str = args.model
-    eval_only: bool = args.eval_only
-    epochs: int = args.epoch
-    overwrite: bool = args.overwrite
-    selected_device: Optional[int] = args.selected_device
+	model_name: str = args.model
+	eval_only: bool = args.eval_only
+	epochs: int = args.epoch
+	overwrite: bool = args.overwrite
+	selected_device: Optional[int] = args.selected_device
 
-    if selected_device is not None:
-        # os.environ["CUDA_VISIBLE_DEVICES"] = f"{selected_device}"
-        torch.cuda.set_device(selected_device)
+	if selected_device is not None:
+		# os.environ["CUDA_VISIBLE_DEVICES"] = f"{selected_device}"
+		torch.cuda.set_device(selected_device)
 
-    # Tokenizer & Model
-    tokenizer: ChatTokenizer
-    model: Module
-    tokenizer, model = Models.from_pretrained(model_name)
+	# Tokenizer & Model
+	tokenizer: ChatTokenizer
+	model: Module
+	tokenizer, model = Models.from_pretrained(model_name)
 
-    # Dataset
-    train_dataset = ChatDataset(
-        file_path=TRAIN_SET, tokenizer=tokenizer, overwrite=overwrite
-    )
-    valid_dataset = ChatDataset(
-        file_path=VALID_SET, tokenizer=tokenizer, overwrite=overwrite
-    )
+	# Dataset
+	train_dataset = ChatDataset(
+		file_path=TRAIN_SET, tokenizer=tokenizer, overwrite=overwrite
+	)
+	valid_dataset = ChatDataset(
+		file_path=VALID_SET, tokenizer=tokenizer, overwrite=overwrite
+	)
 
-    # Data Collator
-    collator = DataCollatorForSeq2Seq(tokenizer.origin_tokenizer, model=model)
+	# Data Collator
+	collator = DataCollatorForSeq2Seq(tokenizer.origin_tokenizer, model=model)
 
-    trainer = DLTrainer(
-        model=model,
-        train_data=train_dataset,
-        eval_data=valid_dataset,
-        epochs=epochs,
-        data_collator=collator,
-        tokenizer=tokenizer.origin_tokenizer
-    )
+	trainer = DLTrainer(
+		model=model,
+		train_data=train_dataset,
+		eval_data=valid_dataset,
+		epochs=epochs,
+		data_collator=collator,
+		tokenizer=tokenizer.origin_tokenizer,
+	)
 
-    if not eval_only:
-        print("Start training... You can skip this process by using \"--eval\".")
-        trainer.train()
+	if not eval_only:
+		print('Start training... You can skip this process by using "--eval".')
+		trainer.train()
 
-    print("Start evaluating...")
-    trainer = DLTrainer(
-        model=Models.from_finetuned(),
-        eval_data=valid_dataset,
-        data_collator=collator,
-        tokenizer=tokenizer.origin_tokenizer
-    )
-    eval_result = trainer.evaluate(valid_dataset)
-    print(eval_result)
+	print("Start evaluating...")
+	trainer = DLTrainer(
+		model=Models.from_finetuned(),
+		eval_data=valid_dataset,
+		data_collator=collator,
+		tokenizer=tokenizer.origin_tokenizer,
+	)
+	eval_result = trainer.evaluate(valid_dataset)
+	print(eval_result)
+
 
 if __name__ == "__main__":
-    profiler = Profile()
-    profiler.run('main()')
+	profiler = Profile()
+	profiler.run("main()")
 
-    stats = Stats(profiler)
-    stats.strip_dirs()
-    stats.sort_stats('cumulative')
-    stats.print_stats()
+	stats = Stats(profiler)
+	stats.strip_dirs()
+	stats.sort_stats("cumulative")
+	stats.print_stats()

@@ -1,3 +1,7 @@
+[project]
+name = "BART"
+requires-python = ">=3.11"
+
 [tool.poetry]
 name = "-bart"
 version = "0.1.0"
@@ -26,3 +30,29 @@ accelerate = "^0.30.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = [
+    # Use `X | Y` for type annotations
+    "UP007"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+docstring-code-format = false
