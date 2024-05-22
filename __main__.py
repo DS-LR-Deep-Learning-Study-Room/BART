@@ -105,7 +105,7 @@ def main():
             file_path=TRAIN_SET,
             tokenizer=tokenizer,
             overwrite=overwrite,
-            index=train_dataset.selected_index,
+            index=train_dataset.index,
         )
 
         trainer = DLTrainer(

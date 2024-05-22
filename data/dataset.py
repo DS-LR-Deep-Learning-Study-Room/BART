@@ -98,17 +98,17 @@ Saving new one...
             table = pa.Table.from_pandas(_df)
             pq.write_table(table, dataset_file_path)
 
-        if index is None:  # Using index
+        if index is not None:  # Using index
             self.dataframe = _df.drop(index=index)
-            self.selected_index = self.dataframe.index
         else:  # Using fraction (default : 1.0)
             self.dataframe = _df.sample(frac=fraction)
+            self.selected_index = self.dataframe.index
 
         self.tokenizer = tokenizer
         self.max_length = max_length
 
     @property
-    def selected_index(self) -> pd.Index:
+    def index(self) -> pd.Index:
         return self.selected_index
 
     async def load_json_data(self, data_files: np.ndarray[str]) -> ChatData:
