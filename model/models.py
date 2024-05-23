@@ -2,9 +2,9 @@ import os
 from enum import StrEnum, unique
 
 from torch.nn import Module
-from transformers import AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM, PreTrainedModel
 
-from ..const import CHECKPOINT_DIR
+from ..const import CHECKPOINT_DIR, MODEL_PATH
 from ..data.tokenizer import ChatTokenizer
 
 
@@ -45,10 +45,27 @@ class Models(StrEnum):
         return tokenizer, model
 
     @classmethod
-    def from_finetuned(cls) -> Module:
-        checkpoints = os.listdir(CHECKPOINT_DIR)
+    def from_finetuned(cls, name: str) -> tuple[ChatTokenizer, PreTrainedModel]:
+        try:
+            model_enum = cls[name]
+        except KeyError as keyerr:
+            raise ValueError(
+                f"""
+                {name} is not a valid model name.
+                Choose from: {", ".join(cls.__members__.keys())}
+                """
+            ) from keyerr
+        tokenizer = model_enum.tokenizer
 
-        model: Module = AutoModelForSeq2SeqLM.from_pretrained(
-            CHECKPOINT_DIR + checkpoints[-1], local_files_only=True
-        )
-        return model
+        model: PreTrainedModel
+        if os.path.exists(MODEL_PATH):
+            model = AutoModelForSeq2SeqLM.from_pretrained(
+                MODEL_PATH, local_files_only=True
+            )
+        else:
+            checkpoints = os.listdir(CHECKPOINT_DIR)
+
+            model = AutoModelForSeq2SeqLM.from_pretrained(
+                CHECKPOINT_DIR + checkpoints[-1], local_files_only=True
+            )
+        return tokenizer, model

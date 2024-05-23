@@ -3,7 +3,6 @@ from cProfile import Profile
 from pstats import Stats
 from typing import Optional
 
-import pandas as pd
 import torch
 from torch.nn import Module
 from transformers import DataCollatorForSeq2Seq
@@ -12,6 +11,7 @@ from .const import TEST_SET, TRAIN_SET
 from .data.dataset import ChatDataset
 from .data.tokenizer import ChatTokenizer
 from .model.models import Models
+from .runner import Runner
 from .trainer import DLTrainer
 
 parser = ArgumentParser(description="Helper for training & inferencing DL models.")
@@ -65,12 +65,29 @@ parser.add_argument(
     required=False,
     help="Choose specific device to run Torch.",
 )
+parser.add_argument(
+    "-I",
+    "--infer",
+    dest="inference",
+    type=str,
+    required=False,
+    help="Run inference with input given.",
+)
 
 
 def main():
     args = parser.parse_args()
 
     model_name: str = args.model
+    input_text: Optional[str] = args.inference
+    if input_text is not None:
+        tokenizer, model = Models.from_finetuned(name=model_name)
+        runner = Runner(
+            model=model, tokenizer=tokenizer.origin_tokenizer
+        )
+        runner.run(text=input_text)
+        return
+
     eval_only: bool = args.eval_only
     epochs: int = args.epoch
     overwrite: bool = args.overwrite
@@ -90,7 +107,6 @@ def main():
     collator = DataCollatorForSeq2Seq(tokenizer.origin_tokenizer, model=model)
 
     # Dataset
-    _index: Optional[pd.Index] = None
     train_dataset: Optional[ChatDataset] = None
     valid_dataset: Optional[ChatDataset] = None
     if not eval_only:

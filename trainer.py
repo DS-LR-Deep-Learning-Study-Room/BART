@@ -9,7 +9,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
-from .const import CHECKPOINT_DIR, MODEL_DIR
+from .const import CHECKPOINT_DIR, MODEL_PATH
 from .data.tokenizer import Tokenizer
 
 
@@ -80,8 +80,8 @@ class DLTrainer:
         self.trainer.train()
 
         with contextlib.suppress(OSError):
-            os.remove(MODEL_DIR)
-        self.trainer.save_model(MODEL_DIR)
+            os.remove(MODEL_PATH)
+        self.trainer.save_model(MODEL_PATH)
 
     def evaluate(self, eval_dataset: Optional[Dataset] = None) -> dict[str, float]:
         return self.trainer.evaluate(eval_dataset=eval_dataset)
