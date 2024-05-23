@@ -30,7 +30,7 @@ class DLTrainer:
         training_args = Seq2SeqTrainingArguments(
             output_dir=CHECKPOINT_DIR,
             overwrite_output_dir=True,
-            evaluation_strategy="epoch",
+            eval_strategy="epoch",
             save_strategy="epoch",
             save_total_limit=2,
             num_train_epochs=epochs,
