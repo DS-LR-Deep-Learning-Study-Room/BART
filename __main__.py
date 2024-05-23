@@ -43,6 +43,14 @@ parser.add_argument(
     help="Number of epochs to train.",
 )
 parser.add_argument(
+    "-B",
+    "--batch-size"
+    dest="batch_size",
+    type=int,
+    default=16,
+    help="Batch size for each device."
+)
+parser.add_argument(
     "-W",
     "--overwrite",
     dest="overwrite",
@@ -88,6 +96,7 @@ def main():
 
     eval_only: bool = args.eval_only
     epochs: int = args.epoch
+    batch_size: int = args.batch_size
     overwrite: bool = args.overwrite
     fraction: float = args.fraction
     selected_device: Optional[int] = args.selected_device
@@ -127,6 +136,7 @@ def main():
             train_data=train_dataset,
             eval_data=valid_dataset,
             epochs=epochs,
+            batch_size=batch_size,
             data_collator=collator,
             tokenizer=tokenizer.origin_tokenizer,
         )
@@ -139,6 +149,7 @@ def main():
     trainer = DLTrainer(
         model=Models.from_finetuned(),
         eval_data=test_dataset,
+        batch_size=batch_size,
         data_collator=collator,
         tokenizer=tokenizer.origin_tokenizer,
     )

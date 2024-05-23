@@ -22,7 +22,7 @@ class DLTrainer:
         train_data: Optional[Dataset] = None,
         eval_data: Optional[Dataset] = None,
         epochs: float = 3,
-        batch_size: int = 4,
+        batch_size: int = 32,
         device: Optional[torch.device] = None,
     ):
         _use_fp16 = device is not None and device == torch.device("cuda")
@@ -39,7 +39,7 @@ class DLTrainer:
             weight_decay=0.01,
             fp16=_use_fp16,
             predict_with_generate=True,
-            load_best_model_at_end=True,
+            load_best_model_at_end=True
         )
         self.trainer = Seq2SeqTrainer(
             model=model,
