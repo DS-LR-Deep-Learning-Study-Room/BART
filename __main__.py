@@ -44,7 +44,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-B",
-    "--batch-size"
+    "--batch-size",
     dest="batch_size",
     type=int,
     default=16,
