@@ -4,9 +4,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizer
 
 
 class Runner:
-    def __init__(
-        self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer
-    ):
+    def __init__(self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer):
         self.model = model
         self.tokenizer = tokenizer
 
@@ -16,7 +14,7 @@ class Runner:
         # Generate the output
         self.model.eval()
         with torch.no_grad():
-            outputs = self.model.generate(**inputs, max_new_tokens = 100)
+            outputs = self.model.generate(**inputs, max_new_tokens=100)
 
         # Decode and print the output
         output_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)

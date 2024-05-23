@@ -82,9 +82,7 @@ def main():
     input_text: Optional[str] = args.inference
     if input_text is not None:
         tokenizer, model = Models.from_finetuned(name=model_name)
-        runner = Runner(
-            model=model, tokenizer=tokenizer.origin_tokenizer
-        )
+        runner = Runner(model=model, tokenizer=tokenizer.origin_tokenizer)
         runner.run(text=input_text)
         return
 
