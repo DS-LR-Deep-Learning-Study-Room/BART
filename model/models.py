@@ -4,7 +4,7 @@ from enum import StrEnum, unique
 from torch.nn import Module
 from transformers import AutoModelForSeq2SeqLM, PreTrainedModel
 
-from ..const import CHECKPOINT_DIR, MODEL_PATH
+from ..const import CHECKPOINT_DIR, HUGGINGFACE_URL, MODEL_PATH
 from ..data.tokenizer import ChatTokenizer
 
 
@@ -58,14 +58,20 @@ class Models(StrEnum):
         tokenizer = model_enum.tokenizer
 
         model: PreTrainedModel
-        if os.path.exists(MODEL_PATH):
+        _model = AutoModelForSeq2SeqLM.from_pretrained(HUGGINGFACE_URL)
+        if _model is not None:
+            print("Using model from HuggingFace")
+            model = _model
+        elif os.path.exists(MODEL_PATH):
+            print("Using model from local res directory.")
             model = AutoModelForSeq2SeqLM.from_pretrained(
                 MODEL_PATH, local_files_only=True
             )
         else:
+            print("Using latest model from checkpoints directory.")
             checkpoints = os.listdir(CHECKPOINT_DIR)
 
             model = AutoModelForSeq2SeqLM.from_pretrained(
-                CHECKPOINT_DIR + checkpoints[0], local_files_only=True
+                CHECKPOINT_DIR + checkpoints[-1], local_files_only=True
             )
         return tokenizer, model
