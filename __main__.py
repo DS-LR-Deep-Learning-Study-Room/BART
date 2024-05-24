@@ -8,7 +8,7 @@ import torch
 from torch.nn import Module
 from transformers import DataCollatorForSeq2Seq
 
-from .const import TEST_SET, TRAIN_SET
+from .const import HUGGINGFACE_URL, TEST_SET, TRAIN_SET
 from .data.dataset import ChatDataset
 from .data.tokenizer import ChatTokenizer
 from .messenger import Messenger
@@ -83,6 +83,13 @@ parser.add_argument(
     required=False,
     help="Run inference with input given.",
 )
+parser.add_argument(
+    "-U",
+    "--upload",
+    dest="upload_to_huggingface",
+    action="store_true",
+    help="Upload model to HuggingFace.",
+)
 
 
 def main():
@@ -102,6 +109,7 @@ def main():
     overwrite: bool = args.overwrite
     fraction: float = args.fraction
     selected_device: Optional[int] = args.selected_device
+    upload_to_huggingface: bool = args.upload_to_huggingface
 
     if selected_device is not None:
         # os.environ["CUDA_VISIBLE_DEVICES"] = f"{selected_device}"
@@ -144,12 +152,18 @@ def main():
         )
         trainer.train()
 
+    tokenizer, model = Models.from_finetuned(name=model_name)
+
+    if upload_to_huggingface:
+        print("Uploading model to huggingface...")
+        model.push_to_hub(HUGGINGFACE_URL)
+
     print("Start evaluating...")
     test_dataset = ChatDataset(
         file_path=TEST_SET, tokenizer=tokenizer, overwrite=overwrite
     )
     trainer = DLTrainer(
-        model=Models.from_finetuned(name=model_name)[1],
+        model=model,
         eval_data=test_dataset,
         batch_size=batch_size,
         data_collator=collator,

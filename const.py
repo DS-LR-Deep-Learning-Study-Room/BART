@@ -1,5 +1,6 @@
 ### Project
 PROJECT_NAME: str = __package__
+HUGGINGFACE_URL: str = "Junnos/KOBART_summarize"
 
 ### File & Path
 CHECKPOINT_DIR: str = PROJECT_NAME + "/checkpoints/"
