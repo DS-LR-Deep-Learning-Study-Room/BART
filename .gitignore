@@ -5,6 +5,8 @@
 
 checkpoints/*
 res/*
+saved/*
+**secrets**
 
 ### Linux ###
 *~

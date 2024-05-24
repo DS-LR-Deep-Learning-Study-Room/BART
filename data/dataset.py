@@ -1,5 +1,6 @@
 import asyncio
 import os
+from collections.abc import Iterable
 from typing import Any, Optional
 
 import numpy as np
@@ -79,7 +80,7 @@ Saving new one...
                     and os.path.splitext(f)[-1] == ".json"
                 ]
                 data_files = [os.path.join(dataset_dir, f) for f in data_files]
-                data_files: np.ndarray = np.array(data_files)
+                data_files = np.array(data_files)
 
                 chat_data = asyncio.run(self.load_json_data(data_files=data_files))
                 _json = chat_data.model_dump_json(indent=2, by_alias=True)
@@ -111,7 +112,7 @@ Saving new one...
     def index(self) -> pd.Index:
         return self.selected_index
 
-    async def load_json_data(self, data_files: np.ndarray[str]) -> ChatData:
+    async def load_json_data(self, data_files: Iterable[str]) -> ChatData:
         _chat_data = ChatData()
 
         async with asyncio.TaskGroup() as tg:

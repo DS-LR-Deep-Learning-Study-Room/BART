@@ -11,6 +11,7 @@ from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from .const import CHECKPOINT_DIR, MODEL_PATH
 from .data.tokenizer import Tokenizer
+from .messenger import Messenger
 
 
 class DLTrainer:
@@ -39,7 +40,7 @@ class DLTrainer:
             weight_decay=0.01,
             fp16=_use_fp16,
             predict_with_generate=True,
-            load_best_model_at_end=True
+            load_best_model_at_end=True,
         )
         self.trainer = Seq2SeqTrainer(
             model=model,
@@ -76,8 +77,12 @@ class DLTrainer:
 
         return {k: round(v, 4) for k, v in result.items()}
 
-    def train(self):
-        self.trainer.train()
+    def train(self, messenger: Optional[Messenger] = None):
+        try:
+            self.trainer.train()
+        except (torch.cuda.OutOfMemoryError, ValueError) as err:
+            if messenger is not None:
+                messenger.send_message(err)
 
         with contextlib.suppress(OSError):
             os.remove(MODEL_PATH)

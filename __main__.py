@@ -1,3 +1,4 @@
+import asyncio
 from argparse import ArgumentParser
 from cProfile import Profile
 from pstats import Stats
@@ -10,6 +11,7 @@ from transformers import DataCollatorForSeq2Seq
 from .const import TEST_SET, TRAIN_SET
 from .data.dataset import ChatDataset
 from .data.tokenizer import ChatTokenizer
+from .messenger import Messenger
 from .model.models import Models
 from .runner import Runner
 from .trainer import DLTrainer
@@ -48,7 +50,7 @@ parser.add_argument(
     dest="batch_size",
     type=int,
     default=16,
-    help="Batch size for each device."
+    help="Batch size for each device.",
 )
 parser.add_argument(
     "-W",
@@ -62,7 +64,7 @@ parser.add_argument(
     "--dataset-fraction",
     dest="fraction",
     type=float,
-    default="1.0",
+    default="0.8",
     help="Fraction to divide dataset to train and valid.",
 )
 parser.add_argument(
@@ -147,14 +149,16 @@ def main():
         file_path=TEST_SET, tokenizer=tokenizer, overwrite=overwrite
     )
     trainer = DLTrainer(
-        model=Models.from_finetuned(),
+        model=Models.from_finetuned(name=model_name)[1],
         eval_data=test_dataset,
         batch_size=batch_size,
         data_collator=collator,
         tokenizer=tokenizer.origin_tokenizer,
     )
     eval_result = trainer.evaluate(valid_dataset)
-    print(eval_result)
+
+    messenger = Messenger()
+    asyncio.run(messenger.send_message(eval_result))
 
 
 if __name__ == "__main__":
