@@ -37,9 +37,11 @@ class DLTrainer:
             num_train_epochs=epochs,
             per_device_train_batch_size=batch_size,
             per_device_eval_batch_size=batch_size,
+            learning_rate=2e-5,
             weight_decay=0.01,
             fp16=_use_fp16,
             predict_with_generate=True,
+            eval_accumulation_steps=3,
             load_best_model_at_end=True,
         )
         self.trainer = Seq2SeqTrainer(

@@ -47,13 +47,14 @@ class ChatTokenizer:
         model_input["input_ids"].squeeze_(0)
         model_input["attention_mask"].squeeze_(0)
 
-        targets = self.tokenizer(
-            text_target=summary_target,
-            max_length=self.max_target,
-            padding="max_length",
-            truncation=True,
-            return_tensors="pt",
-        )
-        model_input["labels"] = targets["input_ids"].squeeze(0)
+        with self.tokenizer.as_target_tokenizer:
+            targets = self.tokenizer(
+                text_target=summary_target,
+                max_length=self.max_target,
+                padding="max_length",
+                truncation=True,
+                return_tensors="pt",
+            )
+            model_input["labels"] = targets["input_ids"].squeeze(0)
 
         return ModelInput.model_validate(model_input)

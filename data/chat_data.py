@@ -75,8 +75,8 @@ class Chat(BaseModel):
 
     @property
     def dialogues(self) -> str:
-        return " ".join(
-            map(lambda d: f"{d.participant_id}:{d.utterance}", self.body.dialogues)
+        return "\n".join(
+            map(lambda d: f"{d.participant_id}: {d.utterance}", self.body.dialogues)
         )
 
 
